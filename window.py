@@ -48,7 +48,7 @@ class Window(pyglet.window.Window):
         self.mouse = (0, 0)
         self.label = None
         self.texture_cache = None # used for rendering weight/grad matrices
-        self.set_line_width(3.0)
+        self.set_line_width(1.0)
         self.particle_batch = None
 
     def set_fps(self, fps=60):
@@ -104,15 +104,16 @@ class Window(pyglet.window.Window):
             v[0] = particles[i][0]
             v[1] = particles[i][1]
 
-    def line_loop(self, vertices):
+    def line_loop(self, vertices, loop=True):
         out = []
         for i in range(len(vertices) - 1):
             # 0,1  1,2  2,3 ... len-1,len  len,0
             out.extend(vertices[i])
             out.extend(vertices[i + 1])
-
-        out.extend(vertices[len(vertices) - 1])
-        out.extend(vertices[0])
+        
+        if loop:
+            out.extend(vertices[len(vertices) - 1])
+            out.extend(vertices[0])
 
         return len(out) // 2, out
 
@@ -125,12 +126,18 @@ class Window(pyglet.window.Window):
             out.extend(vertices[i + 1])
         return len(out) // 2, out
 
-    def draw_poly(self, vertices, color):
-        ll_count, ll_vertices = self.line_loop(vertices)
+    def draw_poly(self, vertices, color, loop=True):
+        ll_count, ll_vertices = self.line_loop(vertices, loop)
 
         pyglet.graphics.draw(ll_count, gl.GL_LINES,
                         ('v2f', ll_vertices),
                         ('c4f', [color[0], color[1], color[2], 1] * (ll_count)))
+
+    def draw_line(self, start, end, start_color, end_color):
+        pyglet.graphics.draw(2, gl.GL_LINES,
+                        ('v2f', [start[0], start[1], end[0], end[1]]),
+                        ('c4f', [start_color[0], start_color[1], start_color[2], 1, \
+                                end_color[0], end_color[1], end_color[2], 1,]))
 
     def draw_poly_fill(self, vertices, color):
         tf_count, tf_vertices = self.triangle_fan(vertices)
